@@ -16,12 +16,12 @@ jobs:
     steps:
       # Intent: fetch the repository so wheel builds have the project sources.
       # Result: runner workspace contains the bjoern3 checkout.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # Intent: provide a modern Python for cibuildwheel itself.
       # Result: the job can run cibuildwheel consistently across platforms.
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
 
