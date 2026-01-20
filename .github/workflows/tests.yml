@@ -37,6 +37,10 @@ jobs:
           cd /tmp
           python -c "import bjoern"
         shell: bash -ex {0}
+        env:
+          # Intent: allow PyO3 to build against newer Python versions using the stable ABI.
+          # Result: CI installs proceed on Python 3.13+ while waiting for PyO3 updates.
+          PYO3_USE_ABI3_FORWARD_COMPATIBILITY: "1"
       - name: Run tests
         run: |
           pip install requests
