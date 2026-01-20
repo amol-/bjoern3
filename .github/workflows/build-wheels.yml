@@ -43,6 +43,7 @@ jobs:
           CIBW_BUILD: "cp38-* cp39-* cp310-* cp311-* cp312-* cp313-* cp313t-* cp314-* cp314t-*"
           CIBW_SKIP: "*-musllinux_*"
           CIBW_BEFORE_ALL_LINUX: "yum install -y libev-devel"
+          CIBW_ENABLE: "cpython-freethreading"
           CIBW_PRERELEASE_PYTHONS: "true"
         run: python -m cibuildwheel --output-dir dist
 
