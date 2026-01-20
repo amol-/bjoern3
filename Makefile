@@ -116,13 +116,6 @@ memwatch:
 	   echo; echo; \
 	   tail -n +25 /proc/$$(pgrep -n ${PYTHON})/smaps'
 
-packages:
-	${PYTHON} setup.py sdist
-	$(MAKE) -C packaging all
-
-upload: packages
-	twine upload dist/*.tar.gz dist/*.whl
-
 $(HTTP_PARSER_OBJ):
 	$(MAKE) -C $(HTTP_PARSER_DIR) http_parser.o CFLAGS_DEBUG_EXTRA=-fPIC CFLAGS_FAST_EXTRA=-fPIC
 
