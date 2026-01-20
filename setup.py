@@ -7,32 +7,20 @@ long_description = open(os.path.join(os.path.dirname(__file__), "README.rst")).r
 WANT_SIGINT_HANDLING = os.environ.get('BJOERN_WANT_SIGINT_HANDLING', True)
 WANT_SIGNAL_HANDLING = os.environ.get('BJOERN_WANT_SIGNAL_HANDLING', True)
 SIGNAL_CHECK_INTERVAL = os.environ.get('BJOERN_SIGNAL_CHECK_INTERVAL', '0.1')
-WANT_STATSD = os.environ.get('BJOERN_WANT_STATSD', False)
-WANT_STATSD_TAGS = os.environ.get('BJOERN_WANT_STATSD_TAGS', False)
 
 compile_flags = [('SIGNAL_CHECK_INTERVAL', SIGNAL_CHECK_INTERVAL)]
 if WANT_SIGNAL_HANDLING:
     compile_flags.append(('WANT_SIGNAL_HANDLING', 'yes'))
 if WANT_SIGINT_HANDLING:
     compile_flags.append(('WANT_SIGINT_HANDLING', 'yes'))
-if WANT_STATSD:
-    compile_flags.append(('WANT_STATSD', 'yes'))
-    if WANT_STATSD_TAGS:
-        compile_flags.append(('WANT_STATSD_TAGS', 'yes'))
-
 SOURCE_FILES = [os.path.join('http-parser', 'http_parser.c')] + \
-               [os.path.join('statsd-c-client', 'statsd-client.c')] + \
                sorted(glob.glob(os.path.join('bjoern', '*.c')))
-
-if not WANT_STATSD:
-    SOURCE_FILES.remove('statsd-c-client/statsd-client.c')
-    SOURCE_FILES.remove('bjoern/statsd_tags.c')
 
 bjoern_extension = Extension(
     '_bjoern',
     sources       = SOURCE_FILES,
     libraries     = ['ev'],
-    include_dirs  = ['http-parser', 'statsd-c-client', '/usr/include/libev',
+    include_dirs  = ['http-parser', '/usr/include/libev',
                      '/opt/local/include', '/opt/homebrew/include', '/usr/local/include'],
     library_dirs  = ['/opt/homebrew/lib/', '/usr/local/lib'],
     define_macros = compile_flags,
