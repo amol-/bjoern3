@@ -1,0 +1,54 @@
+name: Build wheels
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-wheels:
+    name: Wheels (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      # Intent: fetch the repository so wheel builds have the project sources.
+      # Result: runner workspace contains the bjoern3 checkout.
+      - uses: actions/checkout@v4
+
+      # Intent: provide a modern Python for cibuildwheel itself.
+      # Result: the job can run cibuildwheel consistently across platforms.
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # Intent: install system libev so the C extension can compile.
+      # Result: wheel builds can link against libev on macOS.
+      - name: Install libev (macOS)
+        if: runner.os == 'macOS'
+        run: brew install libev
+
+      # Intent: install the wheel builder for multiple Python versions.
+      # Result: cibuildwheel is available on the runner.
+      - name: Install cibuildwheel
+        run: python -m pip install --upgrade pip cibuildwheel
+
+      # Intent: build platform wheels for supported CPython versions.
+      # Result: wheels are available under the dist/ directory.
+      - name: Build wheels
+        env:
+          CIBW_BUILD: "cp38-* cp39-* cp310-* cp311-* cp312-* cp313-* cp313t-* cp314-* cp314t-*"
+          CIBW_SKIP: "*-musllinux_*"
+          CIBW_BEFORE_ALL_LINUX: "yum install -y libev-devel"
+          CIBW_PRERELEASE_PYTHONS: "true"
+        run: python -m cibuildwheel --output-dir dist
+
+      # Intent: preserve the built wheels for inspection and distribution.
+      # Result: wheel artifacts are uploaded to the workflow run.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}
+          path: dist/*.whl
