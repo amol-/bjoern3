@@ -1,10 +1,6 @@
 bjoern3: Fast And Ultra-Lightweight HTTP/1.1 WSGI Server
 ========================================================
 
-.. image:: https://badges.gitter.im/Join%20Chat.svg
-   :alt: Join the chat at https://gitter.im/amol-/bjoern3
-   :target: https://gitter.im/amol-/bjoern3?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
-
 A screamingly fast, ultra-lightweight WSGI_ server for CPython 3.8+,
 written in C using Marc Lehmann's high performance libev_ event loop and
 Ryan Dahl's http-parser_.
@@ -24,7 +20,7 @@ featuring
 
 Installation
 ~~~~~~~~~~~~
-``pip install bjoern3``. See `wiki <http://github.com/amol-/bjoern3/wiki/Installation>`_ for details.
+``pip install bjoern3``.
 
 Usage
 ~~~~~
