@@ -2,6 +2,9 @@ name: Build wheels
 
 on:
   push:
+    branches:
+      - main
+      - master
   pull_request:
   workflow_dispatch:
 
@@ -21,6 +24,11 @@ jobs:
           # Intent: ensure bundled dependencies are available for compilation.
           # Result: submodules like http-parser are present during wheel builds.
           submodules: true
+
+      # Intent: ensure submodules are initialized for build contexts.
+      # Result: http-parser and statsd-c-client sources exist before wheel builds.
+      - name: Sync submodules
+        run: git submodule update --init --recursive
 
       # Intent: provide a modern Python for cibuildwheel itself.
       # Result: the job can run cibuildwheel consistently across platforms.
