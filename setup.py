@@ -2,55 +2,50 @@ import os
 import glob
 from setuptools import setup, Extension
 
-long_description = open(os.path.join(os.path.dirname(__file__), "README.rst")).read()
+# Intent: centralize build-time options so packagers can control signal handling via env vars.
+# Result: compile-time macros are defined consistently based on optional environment overrides.
+WANT_SIGINT_HANDLING = os.environ.get("BJOERN_WANT_SIGINT_HANDLING", True)
+WANT_SIGNAL_HANDLING = os.environ.get("BJOERN_WANT_SIGNAL_HANDLING", True)
+SIGNAL_CHECK_INTERVAL = os.environ.get("BJOERN_SIGNAL_CHECK_INTERVAL", "0.1")
 
-WANT_SIGINT_HANDLING = os.environ.get('BJOERN_WANT_SIGINT_HANDLING', True)
-WANT_SIGNAL_HANDLING = os.environ.get('BJOERN_WANT_SIGNAL_HANDLING', True)
-SIGNAL_CHECK_INTERVAL = os.environ.get('BJOERN_SIGNAL_CHECK_INTERVAL', '0.1')
-
-compile_flags = [('SIGNAL_CHECK_INTERVAL', SIGNAL_CHECK_INTERVAL)]
+compile_flags = [("SIGNAL_CHECK_INTERVAL", SIGNAL_CHECK_INTERVAL)]
 if WANT_SIGNAL_HANDLING:
-    compile_flags.append(('WANT_SIGNAL_HANDLING', 'yes'))
+    compile_flags.append(("WANT_SIGNAL_HANDLING", "yes"))
 if WANT_SIGINT_HANDLING:
-    compile_flags.append(('WANT_SIGINT_HANDLING', 'yes'))
-SOURCE_FILES = [os.path.join('http-parser', 'http_parser.c')] + \
-               sorted(glob.glob(os.path.join('bjoern', '*.c')))
+    compile_flags.append(("WANT_SIGINT_HANDLING", "yes"))
+
+# Intent: collect C sources for the extension in one place to keep the build definition concise.
+# Result: the extension compiles both the vendored HTTP parser and bjoern C sources.
+SOURCE_FILES = [os.path.join("http-parser", "http_parser.c")] + sorted(
+    glob.glob(os.path.join("bjoern", "*.c"))
+)
 
 bjoern_extension = Extension(
-    '_bjoern',
-    sources       = SOURCE_FILES,
-    libraries     = ['ev'],
-    include_dirs  = ['http-parser', '/usr/include/libev',
-                     '/opt/local/include', '/opt/homebrew/include', '/usr/local/include'],
-    library_dirs  = ['/opt/homebrew/lib/', '/usr/local/lib'],
-    define_macros = compile_flags,
-    extra_compile_args = ['-std=c99', '-fno-strict-aliasing', '-fcommon',
-                          '-fPIC', '-Wall', '-Wextra', '-Wno-unused-parameter',
-                          '-Wno-missing-field-initializers', '-g'],
+    "_bjoern",
+    sources=SOURCE_FILES,
+    libraries=["ev"],
+    include_dirs=[
+        "http-parser",
+        "/usr/include/libev",
+        "/opt/local/include",
+        "/opt/homebrew/include",
+        "/usr/local/include",
+    ],
+    library_dirs=["/opt/homebrew/lib/", "/usr/local/lib"],
+    define_macros=compile_flags,
+    extra_compile_args=[
+        "-std=c99",
+        "-fno-strict-aliasing",
+        "-fcommon",
+        "-fPIC",
+        "-Wall",
+        "-Wextra",
+        "-Wno-unused-parameter",
+        "-Wno-missing-field-initializers",
+        "-g",
+    ],
 )
 
-setup(
-    name         = 'bjoern3',
-    author       = 'Alessandro Molina',
-    author_email = 'alessandro@molina.fyi',
-    license      = '2-clause BSD',
-    url          = 'http://github.com/amol-/bjoern3',
-    description  = 'A screamingly fast Python 3 WSGI server written in C.',
-    version      = '3.2.2',
-    long_description = long_description,
-    classifiers  = ['Development Status :: 4 - Beta',
-                    'License :: OSI Approved :: BSD License',
-                    'Programming Language :: C',
-                    'Programming Language :: Python :: 3',
-                    'Programming Language :: Python :: 3.8',
-                    'Programming Language :: Python :: 3.9',
-                    'Programming Language :: Python :: 3.10',
-                    'Programming Language :: Python :: 3.11',
-                    'Programming Language :: Python :: 3.12',
-                    'Programming Language :: Python :: 3.13',
-                    'Programming Language :: Python :: 3.14',
-                    'Topic :: Internet :: WWW/HTTP :: WSGI :: Server'],
-    python_requires = '>=3.8',
-    py_modules   = ['bjoern'],
-    ext_modules  = [bjoern_extension]
-)
+# Intent: delegate project metadata to pyproject.toml while keeping extension build logic here.
+# Result: PEP 517 builds pick up metadata from pyproject.toml with this extension configured.
+setup(ext_modules=[bjoern_extension])
