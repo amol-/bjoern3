@@ -100,7 +100,6 @@ fn accept_tcp(
     loop {
         match listener.accept() {
             Ok((stream, _addr)) => {
-                let mut stream = stream;
                 let local_addr = stream.local_addr().ok();
                 let remote_addr = stream.peer_addr().ok();
                 let token = Token(connections.len() + FIRST_CONN);
@@ -232,7 +231,7 @@ pub(crate) fn server_run(sock: &PyAny, wsgi_app: &PyAny) -> PyResult<()> {
     let family = socket_family(dup_fd)
         .map_err(|err| PyValueError::new_err(format!("socket family lookup failed: {err}")))?;
 
-    let poll = Poll::new().map_err(|err| PyValueError::new_err(err.to_string()))?;
+    let mut poll = Poll::new().map_err(|err| PyValueError::new_err(err.to_string()))?;
     let mut events = Events::with_capacity(1024);
     let waker = Waker::new(poll.registry(), WAKER)
         .map_err(|err| PyValueError::new_err(err.to_string()))?;

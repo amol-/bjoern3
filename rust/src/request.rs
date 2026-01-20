@@ -56,11 +56,31 @@ fn read_more<T: Read>(stream: &mut T, buffer: &mut Vec<u8>) -> std::io::Result<u
 
 fn parse_headers(
     buffer: &[u8],
-) -> Result<httparse::Status<(httparse::Request<'_, '_>, usize)>, httparse::Error> {
+) -> Result<httparse::Status<(ParsedRequest, usize)>, httparse::Error> {
     let mut headers = [httparse::EMPTY_HEADER; 64];
     let mut request = httparse::Request::new(&mut headers);
     match request.parse(buffer)? {
-        httparse::Status::Complete(size) => Ok(httparse::Status::Complete((request, size))),
+        httparse::Status::Complete(size) => {
+            let header_pairs = request
+                .headers
+                .iter()
+                .map(|header| {
+                    (
+                        header.name.to_string(),
+                        String::from_utf8_lossy(header.value).to_string(),
+                    )
+                })
+                .collect();
+
+            let parsed = ParsedRequest {
+                method: request.method.unwrap_or("GET").to_string(),
+                path: request.path.unwrap_or("/").to_string(),
+                version: request.version.unwrap_or(1),
+                headers: header_pairs,
+                body: Vec::new(),
+            };
+            Ok(httparse::Status::Complete((parsed, size)))
+        }
         httparse::Status::Partial => Ok(httparse::Status::Partial),
     }
 }
@@ -130,7 +150,7 @@ pub(crate) fn read_next_request<T: Read>(
         }
     }
 
-    let (request, header_len) = match parse_headers(buffer) {
+    let (mut request, header_len) = match parse_headers(buffer) {
         Ok(httparse::Status::Complete(result)) => result,
         Ok(httparse::Status::Partial) => return Ok(None),
         Err(error) => {
@@ -141,21 +161,10 @@ pub(crate) fn read_next_request<T: Read>(
         }
     };
 
-    let headers: Vec<(String, String)> = request
-        .headers
-        .iter()
-        .map(|header| {
-            (
-                header.name.to_string(),
-                String::from_utf8_lossy(header.value).to_string(),
-            )
-        })
-        .collect();
-
-    let content_length = header_value_impl(&headers, "Content-Length")
+    let content_length = header_value_impl(&request.headers, "Content-Length")
         .and_then(|value| value.parse::<usize>().ok())
         .unwrap_or(0);
-    let is_chunked = header_value_impl(&headers, "Transfer-Encoding")
+    let is_chunked = header_value_impl(&request.headers, "Transfer-Encoding")
         .map(|value| value.to_ascii_lowercase().contains("chunked"))
         .unwrap_or(false);
 
@@ -176,13 +185,9 @@ pub(crate) fn read_next_request<T: Read>(
     buffer.clear();
     buffer.extend_from_slice(&remaining);
 
-    Ok(Some(ParsedRequest {
-        method: request.method.unwrap_or("GET").to_string(),
-        path: request.path.unwrap_or("/").to_string(),
-        version: request.version.unwrap_or(1),
-        headers,
-        body,
-    }))
+    request.body = body;
+
+    Ok(Some(request))
 }
 
 // Intent: calculate connection persistence from HTTP headers and version.

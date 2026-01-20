@@ -20,8 +20,7 @@ pub(crate) struct StartResponse {
 
 #[pymethods]
 impl StartResponse {
-    #[__call__]
-    fn call(&self, status: &str, headers: &PyAny, _exc_info: Option<&PyAny>) -> PyResult<()> {
+    fn __call__(&self, status: &str, headers: &PyAny, _exc_info: Option<&PyAny>) -> PyResult<()> {
         let parsed_headers: Vec<(String, String)> = headers.extract()?;
 
         let mut state = self.state.borrow_mut();
@@ -111,16 +110,16 @@ pub(crate) fn build_environ(
 }
 
 fn response_body_iter(py: Python<'_>, response: &PyAny) -> PyResult<PyObject> {
-    if response.is_instance_of::<PyBytes>()? || response.is_instance_of::<PyString>()? {
-        let list = PyList::new(py, &[response])?;
+    if response.is_instance_of::<PyBytes>() || response.is_instance_of::<PyString>() {
+        let list = PyList::new(py, &[response]);
         Ok(list.into())
     } else {
         Ok(response.to_object(py))
     }
 }
 
-fn next_non_empty_chunk(py: Python<'_>, iterator: &PyAny) -> PyResult<Option<Vec<u8>>> {
-    let mut iter = PyIterator::from_object(py, iterator)?;
+fn next_non_empty_chunk(iterator: &PyAny) -> PyResult<Option<Vec<u8>>> {
+    let mut iter = PyIterator::from_object(iterator)?;
     for item in iter.by_ref() {
         let item = item?;
         if let Ok(bytes) = item.downcast::<PyBytes>() {
@@ -242,9 +241,9 @@ pub(crate) fn prepare_response(
             let iter_obj = response_body_iter(py, response)?;
             iterable = Some(response.into_py(py));
             iterator = Some(iter_obj.into_py(py));
-            first_chunk = next_non_empty_chunk(py, iterator.as_ref().unwrap().as_ref(py))?;
+            first_chunk = next_non_empty_chunk(iterator.as_ref().unwrap().as_ref(py))?;
         }
-    } else if response.is_instance_of::<PyBytes>()? || response.is_instance_of::<PyString>()? {
+    } else if response.is_instance_of::<PyBytes>() || response.is_instance_of::<PyString>() {
         if let Ok(bytes) = response.downcast::<PyBytes>() {
             if !bytes.as_bytes().is_empty() {
                 first_chunk = Some(bytes.as_bytes().to_vec());
@@ -258,7 +257,7 @@ pub(crate) fn prepare_response(
         let iter_obj = response_body_iter(py, response)?;
         iterable = Some(response.into_py(py));
         iterator = Some(iter_obj.into_py(py));
-        first_chunk = next_non_empty_chunk(py, iterator.as_ref().unwrap().as_ref(py))?;
+        first_chunk = next_non_empty_chunk(iterator.as_ref().unwrap().as_ref(py))?;
     }
 
     let start_response_ref = start_response.borrow(py);
@@ -325,13 +324,15 @@ pub(crate) fn prepare_response(
         }
     }
 
+    let finished = iterator.is_none();
+
     Ok(ResponseStream {
         pending,
         iterator,
         iterable,
         chunked,
         keep_alive,
-        finished: iterator.is_none(),
+        finished,
     })
 }
 
@@ -350,7 +351,7 @@ pub(crate) fn next_chunk(py: Python<'_>, response: &mut ResponseStream) -> PyRes
         }
     };
 
-    let next = next_non_empty_chunk(py, iterator.as_ref(py))?;
+    let next = next_non_empty_chunk(iterator.as_ref(py))?;
     if let Some(chunk) = next {
         if response.chunked {
             return Ok(Some(wrap_chunk(&chunk)));
