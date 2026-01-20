@@ -21,14 +21,9 @@ jobs:
       # Result: runner workspace contains the bjoern3 checkout.
       - uses: actions/checkout@v5
         with:
-          # Intent: ensure bundled dependencies are available for compilation.
-          # Result: submodules like http-parser are present during wheel builds.
-          submodules: true
-
-      # Intent: ensure submodules are initialized for build contexts.
-      # Result: http-parser and statsd-c-client sources exist before wheel builds.
-      - name: Sync submodules
-        run: git submodule update --init --recursive
+          # Intent: keep the checkout minimal for Rust-only builds.
+          # Result: the workspace contains only tracked sources.
+          submodules: false
 
       # Intent: provide a modern Python for cibuildwheel itself.
       # Result: the job can run cibuildwheel consistently across platforms.
@@ -36,6 +31,11 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: "3.11"
+
+      # Intent: install the Rust toolchain required by maturin builds.
+      # Result: wheel builds can compile the Rust extension.
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
 
       # Intent: install the wheel builder for multiple Python versions.
       # Result: cibuildwheel is available on the runner.
@@ -48,14 +48,6 @@ jobs:
         env:
           CIBW_BUILD: "cp38-* cp39-* cp310-* cp311-* cp312-* cp313-* cp313t-* cp314-* cp314t-*"
           CIBW_SKIP: "*-musllinux_*"
-          CIBW_BEFORE_ALL_LINUX: "yum install -y libev-devel"
-          CIBW_BEFORE_ALL_MACOS: >-
-            curl -fsSL https://dist.schmorp.de/libev/libev-4.33.tar.gz -o /tmp/libev.tar.gz
-            && tar -xzf /tmp/libev.tar.gz -C /tmp
-            && cd /tmp/libev-4.33
-            && MACOSX_DEPLOYMENT_TARGET=11.0 ./configure --prefix=/usr/local
-            && make -j2
-            && sudo make install
           CIBW_ENABLE: "cpython-freethreading"
           CIBW_ENVIRONMENT_MACOS: "MACOSX_DEPLOYMENT_TARGET=11.0"
           CIBW_PRERELEASE_PYTHONS: "true"
