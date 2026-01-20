@@ -17,6 +17,10 @@ jobs:
       # Intent: fetch the repository so wheel builds have the project sources.
       # Result: runner workspace contains the bjoern3 checkout.
       - uses: actions/checkout@v5
+        with:
+          # Intent: ensure bundled dependencies are available for compilation.
+          # Result: submodules like http-parser are present during wheel builds.
+          submodules: true
 
       # Intent: provide a modern Python for cibuildwheel itself.
       # Result: the job can run cibuildwheel consistently across platforms.
