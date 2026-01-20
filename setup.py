@@ -30,11 +30,11 @@ bjoern_extension = Extension(
 )
 
 setup(
-    name         = 'bjoern',
-    author       = 'Jonas Haag',
-    author_email = 'jonas@lophus.org',
+    name         = 'bjoern3',
+    author       = 'Alessandro Molina',
+    author_email = 'alessandro@molina.fyi',
     license      = '2-clause BSD',
-    url          = 'https://github.com/jonashaag/bjoern',
+    url          = 'http://github.com/amol-/bjoern3',
     description  = 'A screamingly fast Python 3 WSGI server written in C.',
     version      = '3.2.2',
     long_description = long_description,
@@ -47,6 +47,8 @@ setup(
                     'Programming Language :: Python :: 3.10',
                     'Programming Language :: Python :: 3.11',
                     'Programming Language :: Python :: 3.12',
+                    'Programming Language :: Python :: 3.13',
+                    'Programming Language :: Python :: 3.14',
                     'Topic :: Internet :: WWW/HTTP :: WSGI :: Server'],
     python_requires = '>=3.8',
     py_modules   = ['bjoern'],
