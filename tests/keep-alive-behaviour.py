@@ -51,8 +51,11 @@ class Testcase(object):
 
         self.send_request(self._tinker_request())
         response = self.get_response()
-        if self.expect_chunked and not response.chunked:
-            raise Fail("Response unexpectedly not chunked")
+        is_chunked = self._is_chunked(response)
+        if is_chunked != self.expect_chunked:
+            if self.expect_chunked:
+                raise Fail("Response unexpectedly not chunked")
+            raise Fail("Response unexpectedly chunked")
         body = response.read()
 
         if self.raise_error:
@@ -84,10 +87,12 @@ class Testcase(object):
             raise Fail("Different bodies:\n%s\n%s" % (body, self.body))
 
     def _is_chunked(self, response):
-        if not 'Transfer-Encoding: chunked' in response or not response.endswith('0\r\n\r\n'):
+        transfer_encoding = response.getheader('Transfer-Encoding')
+        if not transfer_encoding or 'chunked' not in transfer_encoding.lower():
             return False
-        # TODO: full-featured chunked validation here
-        return True
+        if response.getheader('Content-Length'):
+            return False
+        return response.chunked
 
     def _tinker_request(self):
         if self.http_minor == 0:

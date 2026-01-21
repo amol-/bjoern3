@@ -1,0 +1,14 @@
+[package]
+name = "_bjoern"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "_bjoern"
+crate-type = ["cdylib"]
+
+[dependencies]
+httparse = "1.9"
+libc = "0.2"
+mio = { version = "0.8", features = ["os-poll", "net", "os-ext"] }
+pyo3 = { version = "0.21", features = ["extension-module"] }

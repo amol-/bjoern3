@@ -2,15 +2,14 @@ bjoern3: Fast And Ultra-Lightweight HTTP/1.1 WSGI Server
 ========================================================
 
 A screamingly fast, ultra-lightweight WSGI_ server for CPython 3.8+,
-written in C using Marc Lehmann's high performance libev_ event loop and
-Ryan Dahl's http-parser_.
+written in Rust using the ``httparse`` crate for HTTP/1.1 parsing.
 
 Why It's Cool
 ~~~~~~~~~~~~~
 bjoern3 is the *fastest*, *smallest* and *most lightweight* WSGI server out there,
 featuring
 
-* ~ 1000 lines of C code
+* ~ 1000 lines of Rust code
 * Memory footprint ~ 600KB
 * Python 3.8+ support
 * Single-threaded and without coroutines or other crap
@@ -80,7 +79,4 @@ for initializing and cleaning up the socket in that case.
 
 The Python module name remains ``bjoern``, even though the distribution name is ``bjoern3``.
 
-
 .. _WSGI:         http://www.python.org/dev/peps/pep-0333/
-.. _libev:        http://software.schmorp.de/pkg/libev.html
-.. _http-parser:  https://github.com/joyent/http-parser
